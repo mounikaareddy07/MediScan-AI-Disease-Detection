@@ -1,5 +1,6 @@
 /* MediScan AI - AI Assistant Module
-   Chat interface for explaining scan results and health guidance */
+   Chat interface for explaining scan results and health guidance
+   Supports all 5 scan types: Chest X-ray, Brain MRI, Skin Lesion, Retinal OCT, Bone X-ray */
 
 let assistantOpen = false;
 let chatMessages = [];
@@ -14,7 +15,7 @@ function toggleAssistant() {
         panel.classList.add('open');
         // Send welcome message if first open
         if (chatMessages.length === 0) {
-            addBotMessage("Hello! 👋 I'm MediScan AI Assistant. I can help you understand your scan results, explain medical conditions, and provide health guidance.\n\nTry asking me:\n• \"Explain my scan result\"\n• \"What is pneumonia?\"\n• \"What precautions should I take?\"");
+            addBotMessage("Hello! 👋 I'm MediScan AI Assistant, trained on **5 medical imaging models**.\n\nI can help you understand:\n• 🫁 Chest X-ray results\n• 🧠 Brain tumor classifications\n• 🔬 Skin lesion analysis\n• 👁️ Retinal disease detection\n• 🦴 Bone fracture findings\n\nTry asking me anything about your scan results!");
         }
     } else {
         panel.classList.remove('open');
@@ -33,11 +34,14 @@ async function sendAssistantMessage() {
     addUserMessage(message);
     input.value = '';
 
-    // Build scan context from last result
+    // Build scan context from last result (now includes scan_type)
     const scanContext = window.lastScanResult ? {
         prediction: window.lastScanResult.prediction,
         risk_score: window.lastScanResult.risk_score,
-        confidence: window.lastScanResult.confidence
+        confidence: window.lastScanResult.confidence,
+        scan_type: window.lastScanResult.scan_type || '',
+        scan_type_display: window.lastScanResult.scan_type_display || '',
+        real_model: window.lastScanResult.real_model || false
     } : null;
 
     try {
@@ -85,9 +89,10 @@ function appendChatBubble(type, text) {
 
     const bubble = document.createElement('div');
     bubble.className = 'chat-bubble';
-    // Simple markdown-like formatting
+    // Markdown-like formatting
     bubble.innerHTML = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/\n/g, '<br>');
 
     msgDiv.appendChild(avatar);
@@ -124,21 +129,23 @@ function getAssistantPanelHTML() {
                 <div class="assistant-avatar">🤖</div>
                 <div>
                     <h3>AI Assistant</h3>
-                    <p>Online • Ready to help</p>
+                    <p>5 Models • Ready to help</p>
                 </div>
             </div>
             <button class="assistant-close" onclick="toggleAssistant()">✕</button>
         </div>
         <div class="assistant-messages" id="assistant-messages"></div>
         <div class="chat-suggestions">
-            <button class="suggestion-chip" onclick="askSuggestion('Explain my scan result')">Explain result</button>
-            <button class="suggestion-chip" onclick="askSuggestion('What is pneumonia?')">About Pneumonia</button>
-            <button class="suggestion-chip" onclick="askSuggestion('What precautions should I take?')">Precautions</button>
-            <button class="suggestion-chip" onclick="askSuggestion('How does the AI work?')">How AI works</button>
+            <button class="suggestion-chip" onclick="askSuggestion('Explain my scan result')">📋 Explain result</button>
+            <button class="suggestion-chip" onclick="askSuggestion('What scan types do you support?')">🔬 Scan types</button>
+            <button class="suggestion-chip" onclick="askSuggestion('Tell me about brain tumors')">🧠 Brain tumors</button>
+            <button class="suggestion-chip" onclick="askSuggestion('What is melanoma?')">🔬 Melanoma</button>
+            <button class="suggestion-chip" onclick="askSuggestion('Tell me about retinal diseases')">👁️ Eye diseases</button>
+            <button class="suggestion-chip" onclick="askSuggestion('How does the AI work?')">🤖 How AI works</button>
         </div>
         <div class="assistant-input-area">
             <input type="text" class="assistant-input" id="assistant-input"
-                   placeholder="Ask me anything..." onkeypress="handleAssistantKeypress(event)">
+                   placeholder="Ask about any scan type or condition..." onkeypress="handleAssistantKeypress(event)">
             <button class="assistant-send-btn" onclick="sendAssistantMessage()">➤</button>
         </div>
     </div>
